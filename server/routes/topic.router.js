@@ -65,7 +65,6 @@ router.get('/featuredtopic', (req, res) => {
 //for explanation of any variables or methods in the following get request, see
 //router.get('/alltopics') as the same variables and methods are used there
 router.get('/featuredlanding', (req, res) => {
-    console.log('Inside featuredlanding');
     
 
     // if(req.isAuthenticated()){
@@ -75,7 +74,6 @@ router.get('/featuredlanding', (req, res) => {
     "topic"."contributor2_id" = "contributor"."id" WHERE "featured" = true;`
 
     pool.query(queryText).then((result) => {
-        console.log('result.rows: ', result.rows);
         
         res.send(result.rows)
 
@@ -92,12 +90,10 @@ router.get('/featuredlanding', (req, res) => {
 
 //gets archived topics from database to display on landing page
 router.get('/archived', (req, res)=>{
-    console.log('in archive GET LP');
     // if(req.isAuthenticated()){
     let queryText = `SELECT "topic"."id", "topic_title", "published_date", "icon_url", "archive_summary" FROM "topic"
                     WHERE "featured" = 'false' AND "published" = 'true' ORDER BY published_date DESC;`
     pool.query(queryText).then((result) => {
-        console.log('result.rows:', result.rows);
         res.send(result.rows)
     }).catch((error)=> {
         console.log('error get archived for LP:', error);
@@ -115,13 +111,11 @@ router.get('/archived', (req, res)=>{
  */
 
 router.post('/newtopic', (req, res) => {
-    console.log('Inside postroute');
     
 
     // if(req.isAuthenticated){
     //game is the newInput object from state in GameInfo.js
     const topic = req.body;
-    console.log('topic: ', topic);
 
 
     (async () => {
@@ -134,11 +128,9 @@ router.post('/newtopic', (req, res) => {
             //text for posting contributor info to the database
             let queryText1 = `INSERT INTO "contributor" ("first_name", "last_name", "bio", "photo_url")
                  VALUES($1, $2, $3, $4) RETURNING "id";`;
-            console.log('topic.contributor1FirstName: ', topic.contributor1FirstName);
 
             const contributor1Result = await client.query(queryText1, [topic.contributor1FirstName,
             topic.contributor1LastName, topic.bio1, topic.photo1]);
-            console.log('successfully posted contributor1');
 
             const contributor1Id = contributor1Result.rows[0].id
 
@@ -146,7 +138,6 @@ router.post('/newtopic', (req, res) => {
                  VALUES($1, $2, $3, $4) RETURNING "id";`;
             const contributor2Result = await client.query(queryText2, [topic.contributor2FirstName,
             topic.contributor2LastName, topic.bio2, topic.photo2]);
-            console.log('successfully posted contributor12');
 
             const contributor2Id = contributor2Result.rows[0].id
 
@@ -155,7 +146,6 @@ router.post('/newtopic', (req, res) => {
                  "contributor2_id", "archive_summary", "icon_url") VALUES($1, $2, $3, $4, $5, $6, $7)  RETURNING "id";`;
             const topicResult = await client.query(queryText, [topic.topicTitle, topic.topicPremise, topic.topicCommonGround,
                 contributor1Id, contributor2Id, topic.topicSummary, topic.topicReadMore]); //<---- TOPIC READ MORE IS ACTUALLY ICON URL
-            console.log('successfully posted topic');
 
             //the id of the topic that was created in topicResult
             const topicId = topicResult.rows[0].id
@@ -164,24 +154,19 @@ router.post('/newtopic', (req, res) => {
                     $2, $3);`
 
             await client.query(queryText3, [topicId, contributor1Id, topic.proposal1])
-            console.log("successfully posted contributor1's proposal");
 
             let queryText4 = `INSERT INTO "proposal" ("topic_id", "contributor_id", "proposal") VALUES($1,
                     $2, $3);`
 
             await client.query(queryText4, [topicId, contributor2Id, topic.proposal2])
-            console.log("successfully posted contributor2's proposal");
 
             //key is each property in keyClaims e.g. 0:{topicId: 1, ...}, 1:{topicId: 2, ...}, ...
             for (key in topic.keyClaims) {
-                console.log('key: ', key);
-                console.log('topic.keyClaims: ', topic.keyClaims);
 
                 let claim_order = key;
                 //keyData is the value of a property in the keyClaims object e.g. 
                 //{claimDbId: '0', claimContributor: 'contributor1', keyClaim: 'text', streamData: {}}
                 let keyData = topic.keyClaims[key]
-                console.log('keyData: ', keyData);
 
                 let keyClaimData = [];
 
@@ -189,12 +174,9 @@ router.post('/newtopic', (req, res) => {
                     //keyDataProp is the value of a property in the keyData object e.g.
                     //'0', 'contributor1', 'text' 
                     let keyDataProp = keyData[prop]
-                    console.log(' HIIIIIIII prop: ', prop);
-                    console.log(' MMMMMMMMEEEEEE  keyData at prop: ', keyDataProp);
                     
                     keyClaimData.push(keyDataProp);
                 }
-                console.log('JJJJJJJKKKKKKKKK keyClaimDataArray: ', keyClaimData);
                 
                 //end for loop of for(prop in keyData)
 
@@ -207,13 +189,11 @@ router.post('/newtopic', (req, res) => {
                     contributor = contributor2Id
                 }
                 const keyClaimResult = await client.query(queryText5, [topicId, contributor, keyClaimData[2], claim_order])
-                console.log("successfully posted key claim");
 
                 const keyClaimId = keyClaimResult.rows[0].id
 
                 let streamData = keyClaimData[3]
 
-                console.log('streamDataaaaaaaaaaaaaa: ', streamData);
 
                 for (stream in streamData) {
                     let stream_order = stream; //<-- local stream Id number
@@ -230,7 +210,6 @@ router.post('/newtopic', (req, res) => {
                         contributor = contributor2Id
                     }
                     await client.query(queryText6, [keyClaimId, contributor, streamDataObj.streamComment, streamDataObj.streamEvidence, stream_order])
-                    console.log("successfully posted stream claim");
                 }
             }
 
@@ -264,7 +243,6 @@ router.post('/newtopic', (req, res) => {
 //WRITTEN BY ATTICUS
 //TOGGLES PUBLISHED STATUS IN TOPIC TABLE
 router.put('/togglePublished', (req, res) => {
-    console.log('in /api/topics/togglePublished', req.body);
 
     //topicId contains the id of the topic whose status of published or not published
     //we want to change
@@ -273,7 +251,6 @@ router.put('/togglePublished', (req, res) => {
 
     pool.query(queryText, [topicId])
         .then((result) => {
-            console.log('successful PUT /api/topic/togglePublished');
             res.sendStatus(200);
         })
 
@@ -288,7 +265,6 @@ router.put('/togglePublished', (req, res) => {
 //WRITTEN BY ATTICUS
 //TOGGLES FEATURED STATUS IN TOPIC TABLE (SETS ALL TO UNFEATURED, SETS SELECTED TO FEATURED)
 router.put('/toggleFeatured', (req, res) => {
-    console.log('in /api/topics/toggleFeatured', req.body);
 
     //topicId contains the id of the topic whose status of featured
     //we want to change
@@ -307,7 +283,6 @@ router.put('/toggleFeatured', (req, res) => {
             //topicId tells the topic table which topic we want to change to the featured topic
             pool.query(secondQueryText, [topicId])
                 .then((result) => {
-                    console.log('successful PUT /api/topic/toggleFeatured');
                     res.sendStatus(200);
                 })
 
@@ -334,7 +309,6 @@ router.delete('/deleteTopic/:id', (req, res) => {
     let queryText = `DELETE FROM "topic" WHERE id = $1;`
     pool.query(queryText, [topicId])
         .then((result) => {
-            console.log('successful DELETE /api/topic/deleteTopic');
             res.sendStatus(200);
         })
         .catch((err) => {
@@ -345,7 +319,6 @@ router.delete('/deleteTopic/:id', (req, res) => {
 
 //updates topic in database
 router.put('/updatetopic', (req, res) => {
-    console.log('inside putroute');
     
     let topic = req.body;
     console.log('topic: ', topic);
@@ -366,43 +339,33 @@ router.put('/updatetopic', (req, res) => {
 
             await client.query(queryText1, [topic.contributor1FirstName,
                 topic.contributor1LastName, topic.bio1, topic.photo1, topic.contributor1DbId]);
-            console.log('successfully posted contributor1');
 
             let queryText2 = `UPDATE "contributor" SET "first_name" = $1, "last_name" = $2, "bio" = $3, "photo_url" = $4
             WHERE "id" = $5;`;
-            console.log('first name: ', topic.contributor2FirstName);
-            console.log('contributor2 id: ', topic.contributor2DbId);
             
             await client.query(queryText2, [topic.contributor2FirstName,
                 topic.contributor2LastName, topic.bio2, topic.photo2, topic.contributor2DbId]);
-            console.log('successfully posted contributor2');
 
             //creates an entry in the topic table in the database
             let queryText = `UPDATE "topic" SET "topic_title" = $1, "premise" = $2, "common_ground" = $3, 
             "archive_summary" = $4, "icon_url" = $5 WHERE "id" = $6;`;
             await client.query(queryText, [topic.topicTitle, topic.topicPremise, topic.topicCommonGround, 
                 topic.topicSummary, topic.topicReadMore, topic.topicDbId]);
-            console.log('successfully posted topic');
 
             let queryText3 = `UPDATE "proposal" SET "proposal" = $1 WHERE "id" = $2;`
             await client.query(queryText3, [topic.proposal1, topic.proposal1DbId])
-            console.log("successfully posted contributor1's proposal");
 
             let queryText4 = `UPDATE "proposal" SET "proposal" = $1 WHERE "id" = $2;`
 
             await client.query(queryText4, [topic.proposal2, topic.proposal2DbId])
-            console.log("successfully posted contributor2's proposal");
 
             //key is each property in keyClaims e.g. 0:{topicId: 1, ...}, 1:{topicId: 2, ...}, ...
             for (key in topic.keyClaims) {
-                console.log('key: ', key);
-                console.log('topic.keyClaims: ', topic.keyClaims);
 
                 let claim_order = key;
                 //keyData is the value of a property in the keyClaims object e.g. 
                 //{claimDbId: '0', claimContributor: 'contributor1', keyClaim: 'text', streamData: {}}
                 let keyData = topic.keyClaims[key]
-                console.log('keyData: ', keyData);
 
                 let keyClaimData = [];
 
@@ -416,7 +379,6 @@ router.put('/updatetopic', (req, res) => {
 
                 let queryText5 = `UPDATE "key_claim" SET "contributor_id" = $1, "claim" = $2 WHERE "id" = $3;`;
                 let contributor;
-                console.log('keyClaimData[1]: ', keyClaimData[1]);
                 
                 if (keyClaimData[1] === 'contributor1') {
                     contributor = topic.contributor1DbId
@@ -424,7 +386,6 @@ router.put('/updatetopic', (req, res) => {
                     contributor = topic.contributor2DbId
                 }
                 const keyClaimResult = await client.query(queryText5, [contributor, keyClaimData[2], keyClaimData[0]])
-                console.log("successfully posted key claim");
 
                 let streamData = keyClaimData[3]
 
@@ -441,7 +402,6 @@ router.put('/updatetopic', (req, res) => {
                         contributor = topic.contributor2DbId
                     }
                     await client.query(queryText6, [contributor, streamDataObj.streamComment, streamDataObj.streamEvidence, streamDataObj.streamDbId])
-                    console.log("successfully posted stream claim");
                 }
             }
 
@@ -494,7 +454,6 @@ router.get(`/fetchEditTopicInfo/:id`, (req, res) => {
             "topic"."id" as "topic_id" FROM topic 
             WHERE topic.id = $1;`;
             const topicResult = await client.query(queryText1, [topicId]);
-            console.log('TOPIIIIIIICCCCCC: ', topicResult.rows[0]);
             
             selectedTopicToSend = {
                 topicDbId: topicResult.rows[0].topic_id,

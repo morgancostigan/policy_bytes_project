@@ -29,13 +29,11 @@ router.get('/getGeneralcomments/:id', (req, res) => {
     pool.query(queryText, [topicId]).then((result) => {
         //all of the comments are stored in result.rows; therefore we will send back
         //result.rows
-        console.log('here is what i got back: ',result.rows);
         
         res.send(result.rows)
         //if there was an error in getting the comments from the database,
         //the error will be displayed in the console log
     }).catch((error) => {
-        console.log('Error in getting comments_general: ', error);
 
     })
 
@@ -60,25 +58,20 @@ router.post('/addComment', (req, res) => {
             try {
                 await client.query('BEGIN');
 
-                console.log('this is req.body as it enters addComment', req.body);
 
                 let commentId;
                 if (req.body.key_claim_id) {
                     let queryText1 = `INSERT INTO comments_general ("person_id", "topic_id", "comment", "approved", "key_claim_id") VALUES ($1, $2, $3, $4, $5) RETURNING id;`;
                     commentId = await client.query(queryText1, [req.body.personId, req.body.topic_id, req.body.comment, req.body.approved, req.body.key_claim_id]);
-                    console.log('addComment key_claim_id');
                 } else if (req.body.stream_id) {
                     let queryText1 = `INSERT INTO comments_general ("person_id", "topic_id", "comment", "approved", "stream_id") VALUES ($1, $2, $3, $4, $5) RETURNING id;`;
                     commentId = await client.query(queryText1, [req.body.personId, req.body.topic_id, req.body.comment, req.body.approved, req.body.stream_id]);
-                    console.log('addComment stream_id');
                 } else if (req.body.proposal_id) {
                     let queryText1 = `INSERT INTO comments_general ("person_id", "topic_id", "comment", "approved", "proposal_id") VALUES ($1, $2, $3, $4, $5) RETURNING id;`;
                     commentId = await client.query(queryText1, [req.body.personId, req.body.topic_id, req.body.comment, req.body.approved, req.body.proposal_id]);
-                    console.log('addComment proposal_id');
                 }  else {
                     let queryText1 = `INSERT INTO comments_general ("person_id", "topic_id", "comment", "approved") VALUES ($1, $2, $3, $4) RETURNING id;`;
                     commentId = await client.query(queryText1, [req.body.personId, req.body.topic_id, req.body.comment, req.body.approved]);
-                    console.log(commentId.rows[0].id)
                 }
 
                 //begins series of async database SELECTS to add to selectedTopicToSend
@@ -110,7 +103,6 @@ router.post('/addComment', (req, res) => {
 
                 //checks for errors at any point within the try block; if errors are found,
                 //all the data is cleared to prevent data corruption
-                console.log('ROLLBACK', e);
                 await client.query('ROLLBACK');
                 throw e;
             } finally {
@@ -122,7 +114,6 @@ router.post('/addComment', (req, res) => {
             //if an error occurs in posting the game info to the database, the error will
             //appear in the console log
         })().catch((error) => {
-            console.log('CATCH', error);
             res.sendStatus(500);
         })
 
@@ -136,15 +127,13 @@ router.delete('/deleteComment/:id', (req, res) => {
     //TO-DO add isAuthenticated AND status === 2 for Admin access
     if (req.isAuthenticated && req.user.status === 2) {
         let commentId = req.params.id;
-        console.log('in /api/comments/deleteComment', commentId);
         let queryText = `DELETE from comments_general WHERE id = $1;`
         pool.query(queryText, [commentId])
             .then((result) => {
-                console.log('successful DELETE /api/comments/deleteComment');
                 res.sendStatus(200);
             })
             .catch((err) => {
-                console.log('error in DELETE /api/comments/deleteComment');
+                console.log(err);
                 res.sendStatus(500);
             })
     }
@@ -153,7 +142,6 @@ router.delete('/deleteComment/:id', (req, res) => {
 router.put('/likeincrement/:id', (req, res) => {
     //in order to like an item, user must be signed in
     if (req.isAuthenticated) {
-        console.log(req.body);
         pool.query(`UPDATE "comments_general" SET "likes" = $1 WHERE "id" = $2;`, [req.body.likes + 1, req.body.id]).then((result) => {
             res.sendStatus(201);
         }).catch((err) => {
@@ -167,7 +155,6 @@ router.put('/likedecrement/:id', (req, res) => {
     //in order to like an item, user must be signed in
 
     if (req.isAuthenticated) {
-        console.log(req.body.likes);
         pool.query(`UPDATE "comments_general" SET "likes" = $1 WHERE "id" = $2;`, [req.body.likes - 1, req.body.id]).then((result) => {
             res.sendStatus(201);
         }).catch((err) => {
