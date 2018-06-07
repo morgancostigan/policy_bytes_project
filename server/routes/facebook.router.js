@@ -35,7 +35,9 @@ facebookStrategy.authenticate('facebook', { successRedirect: successUrl,
                                       
 router.get('/send',
 facebookStrategy.authenticate('facebook', { scope: ['public_profile', 'email'] } ), (req, res) => {
+  console.log('in facebook router');
   res.sendStatus(200);
+
 });
 
 // clear all server session information about this user

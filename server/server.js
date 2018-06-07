@@ -45,6 +45,9 @@ app.use(express.static('build'));
 // App Set //
 const PORT = process.env.PORT || 5000;
 
+// var options, var server, and server.listen are for localhost development
+//for running an https server.
+
 // var options = {
 //   key: fs.readFileSync( './localhost.key' ),
 //   cert: fs.readFileSync( './localhost.cert' ),
@@ -53,9 +56,12 @@ const PORT = process.env.PORT || 5000;
 // };
 
 // var server = https.createServer( options, app );
-// Only for dev purposes
-//var server = https.createServer( app );
-/** Listen * */
+
+//  server.listen(PORT, () => {
+//    console.log(`Listening on port: ${PORT}`);
+//  }); 
+
+//app.listen is for heroku
 app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
 }); 

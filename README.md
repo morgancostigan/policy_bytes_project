@@ -28,40 +28,45 @@ Required:
 To start with a sample table: <br>
 - Create a new database in PostgreSQL named `policy-bytes-2`
 - In terminal, navigate to the folder containing sampleData.psql (at the root of this project)
-- run command `psql policy_bytes_2 < dbexport.psql`. This should give you a starting databse. 
+- run command `psql policy_bytes_2 < dbexport.psql`. This should give you a starting database. 
 - Default admin login, accessible by going to /admin in the URL bar, username: david password: 12
 
+To run a development build on your own machine: 
 
-
-Once the database is set up, to run a development build on your own machine: 
 1) Clone/download Repository
 2) `npm install`
 
-* Create a `.env` file at the root of the project and paste this line into the file:
-    ```
-    SERVER_SESSION_SECRET=superDuperSecret
-    ```
-    While you're in your new `.env` file, take the time to replace `superDuperSecret` with some long random string like `25POUbVtx6RKVNWszd9ERB9Bb6` to keep your application secure. If you don't do this step, create a secret with less than eight characters, or leave it as `superDuperSecret`, the app will still work but you will get a warning.
+3) Create a .env file with the following variables, for local deployment set DEV=true;
 
-* Start postgres if not running already by using `brew services start postgresql`
-* Navigate to `localhost:3000`
+SERVER_SESSION_SECRET=<br>
+FACEBOOK_APP_ID=<br>
+FACEBOOK_APP_SECRET=<br>
+DEV=true
+LOCALHOST_REDIRECT_URL=YOUR_LOCALHOST_AND_PORT/api/facebook/callback
+DEPLOY_REDIRECT_URL=YOUR_DEPLOY_URL/api/facebook/callback
+LOCALHOST_SUCCESS_URL=YOUR_LOCALHOST_AND_PORT/#/topicPage
+DEPLOY_SUCCESS_URL=YOUR_DEPLOY_URL/#/topicPage
 
+To get a FACEBOOK_APP_ID and FACEBOOK_APP SECRET, register a new PolicyBytes app at https://developers.facebook.com/. Also list the site's domain, as well as redirect URLs.
 
+If you are in development, in FacebookLogin.jsx, change the URL for the callback manually to localhost:
+https://localhost:3000/api/facebook/send
 
-3) Initialize Facebook Auth by setting up a .env file with a Facebook FACEBOOK_APP_ID and FACEBOOK_APP_SECRET
-For local development you'll need to run two server: <br/> 
-4) `npm run server`
-5) `npm run client` 
+Otherwise change it to the name of your deployed site plus /api/facebook/send.
 
-Note: Because of the Facebook Auth strategy the development server runs on an https:// URL. This URL is not actually secure so your brower my warn you that it is unsafe. 
+4) Get a key and cert for https development with create-react-app. More info here: https://medium.com/@nileshsingh/everything-about-creating-an-https-server-using-node-js-2fc5c48a8d4e
 
-Violà!
+5) For local development, in Server.js at the bottom comment out the lines for var options, var server and server.listen, and comment in app.listen.
+
+6) `npm run server`
+7) `npm run client` 
+
 
 
 ### Features: 
-- Dynamic landing page with an introduction to the site's format, a admin-selectable 'Current Conversation', and an archive section. 
+- Dynamic landing page with an introduction to the site's format, an admin-selectable 'Current Conversation', and an archive section. 
 - Topic Page featuring the topic premise, contributors' bios and common ground, and an intuitive discussion platform highlighting the contributors' key points and the back-and-forth conversation between contributors on each key point. 
-- A threaded comments section with likes and replys.
+- A threaded comments section with likes and replies.
 - The ability to engage further with relevent non-profits by clicking 'Love' on a contributor's premise or key claim. 
 - A robust admin section allowing the user to create/edit/delete, publish/unpublish, and feature/unfeature, topics. 
 - A Facebook authorization strategy encouragins users to engage in a civil, respectful manner in the comments section.

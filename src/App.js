@@ -1,6 +1,7 @@
 import React from 'react';
 import {
-  BrowserRouter as Router,
+  // BrowserRouter as Router,
+  HashRouter as Router,
   Route,
   Redirect,
   Switch,
@@ -30,6 +31,7 @@ const App = () => (
             path="/home"
             component={LandingPage}
           />
+          <Redirect exact from="/#/topicPage%0A" to="/topicPage"/>
           <Route
             path="/topicPage"
             component={TopicPage}
